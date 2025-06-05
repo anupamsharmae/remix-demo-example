@@ -1,13 +1,9 @@
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-} from "@remix-run/react";
+import { Links, Link, Meta, Outlet, Scripts, isRouteErrorResponse, ScrollRestoration, useRouteError, useMatches } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
 
-import "./tailwind.css";
+// import "./tailwind.css";
+import sharedStyles from '~/styles/shared.css?url';
+import Error from "./components/util/Error";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -18,11 +14,17 @@ export const links: LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap",
   },
+  {
+    rel: "stylesheet",
+    href: sharedStyles
+  }
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const matches = useMatches();
+  const disableJS = matches.some(match => match.handle?.disableJS);
   return (
     <html lang="en">
       <head>
@@ -34,7 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <ScrollRestoration />
-        <Scripts />
+        {!disableJS && <Scripts />}
       </body>
     </html>
   );
@@ -42,4 +44,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  console.log('ERROR@@@@@@@ -- ', error.error)
+  console.log('\n');
+  console.log('isRouteErrorResponse---', isRouteErrorResponse(error));
+  console.log('isDefinitelyAnError---', (error));
+  let customError = isRouteErrorResponse(error) ? error.data: error;
+  return <Layout>
+    <main>
+      <Error title={customError?.message}>
+        <p>Back to <Link to="/">safety</Link></p>
+      </Error>
+    </main>
+  </Layout>
 }
